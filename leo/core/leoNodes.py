@@ -40,9 +40,15 @@ class NodeIndices:
         v2 = fc.gnxDict.get(gnx)
         if v2 and v2 != v:
             g.internalError(
-                f"getNewIndex: gnx clash {gnx}\n"
-                f"          v: {v}\n"
-                f"         v2: {v2}")
+                ###
+                # f"getNewIndex: gnx clash {gnx}\n"
+                # f"          v: {v}\n"
+                # f"         v2: {v2}")
+                '\n'.join([
+                    'getNetIndex: gnx clash ' + gnx,
+                    '          v: ' + repr(v) ,
+                    '         v2: ' + repr(v2),
+                ]))
     #@+node:ekr.20150302061758.14: *3* ni.compute_last_index
     def compute_last_index(self, c):
         """Scan the entire leo outline to compute ni.last_index."""
@@ -66,7 +72,8 @@ class NodeIndices:
         """Return a new gnx."""
         t_s = self.update()
             # Updates self.lastTime and self.lastIndex.
-        gnx = g.toUnicode(f"{self.userId}.{t_s}.{self.lastIndex:d}")
+        ### gnx = g.toUnicode(f"{self.userId}.{t_s}.{self.lastIndex:d}")
+        gnx = g.toUnicode('.'.join([self.userId, t_s, str(self.lastIndex)]))
         return gnx
     #@+node:ekr.20031218072017.1994: *3* ni.get/setDefaultId
     # These are used by the FileCommands read/write code.
@@ -91,7 +98,8 @@ class NodeIndices:
         fc = c.fileCommands
         t_s = self.update()
             # Updates self.lastTime and self.lastIndex.
-        gnx = g.toUnicode(f"{self.userId}.{t_s}.{self.lastIndex:d}")
+        ### gnx = g.toUnicode(f"{self.userId}.{t_s}.{self.lastIndex:d}")
+        gnx = g.toUnicode('.'.join([self.userId, t_s, str(self.lastIndex)]))
         v.fileIndex = gnx
         self.check_gnx(c, gnx, v)
         fc.gnxDict[gnx] = v
@@ -141,9 +149,11 @@ class NodeIndices:
         # This logic must match the existing logic so that
         # previously written gnx's can be found.
         if n in (None, 0, '',):
-            s = f"{theId}.{t}"
+            ### s = f"{theId}.{t}"
+            s = '.'.join(theId, t)
         else:
-            s = f"{theId}.{t}.{n}"
+            ### s = f"{theId}.{t}.{n}"
+            s = '.'.join(theId, t, n)
         return g.toUnicode(s)
     #@+node:ekr.20150321161305.13: *3* ni.update
     def update(self):
@@ -238,12 +248,26 @@ class Position:
         stack1, stack2 = self.stack, other.stack
         n1, n2 = len(stack1), len(stack2); n = min(n1, n2)
         # Compare the common part of the stacks.
-        for item1, item2 in zip(stack1, stack2):
-            v1, x1 = item1; v2, x2 = item2
+        ### Work-around for javaScripthon
+        i1, i2 = 0, 0
+        while i1 < len(stack1) and i2 < len(stack2):
+            item1 = stack1[i1]
+            item2 = stack2[i2]
+            v1, x1 = item1
+            v2, x2 = item2
             if x1 > x2:
                 return True
             if x1 < x2:
                 return False
+            i1 += 1
+            i2 += 1
+        ###
+        # for item1, item2 in zip(stack1, stack2):
+            # v1, x1 = item1; v2, x2 = item2
+            # if x1 > x2:
+                # return True
+            # if x1 < x2:
+                # return False
         # Finish the comparison.
         if n1 == n2:
             x1, x2 = self._childIndex, other._childIndex
@@ -271,15 +295,26 @@ class Position:
         p = self
         if p.v:
             return (
-                "<"
-                f"pos {id(p)} "
-                f"childIndex: {p._childIndex} "
-                f"lvl: {p.level()} "
-                f"key: {p.key()} "
-                f"{p.h}"
-                ">"
+                ### 
+                # "<"
+                # f"pos {id(p)} "
+                # f"childIndex: {p._childIndex} "
+                # f"lvl: {p.level()} "
+                # f"key: {p.key()} "
+                # f"{p.h}"
+                # ">"
+                ''.join([
+                    '<'
+                    ' pos ', str(id(p)),
+                    ' childIndex: ', str(p._childIndex),
+                    ' lvl: ', str(p.level()),
+                    ' key: ', str(p.key()),
+                    p.h,
+                    '>',
+                ])
             )
-        return f"<pos {id(p)} [{len(p.stack)}] None>"
+        ### return f"<pos {id(p)} [{len(p.stack)}] None>"
+        return '<pos ' + str(id(p)) + str(len(p.stack())) + 'None>'
 
     __repr__ = __str__
     #@+node:ekr.20061006092649: *4* p.archivedPosition
@@ -314,8 +349,10 @@ class Position:
         result = []
         for z in p.stack:
             v, childIndex = z
-            result.append(f"{id(v)}:{childIndex}")
-        result.append(f"{id(p.v)}:{p._childIndex}")
+            ### result.append(f"{id(v)}:{childIndex}")
+            result.append(str(id(v)) + ':' + str(childIndex))
+        ### result.append(f"{id(p.v)}:{p._childIndex}")
+        result.append(str(id(p.v)) + ':' + str(p._childIndex))
         return '.'.join(result)
 
     def sort_key(self, p):
@@ -354,7 +391,8 @@ class Position:
         level = self.level() - firstLevel
         plusMinus = "+" if p.hasChildren() else "-"
         pad = '\t' * level
-        return f"{pad}{plusMinus} {p.h}"
+        ### return f"{pad}{plusMinus} {p.h}"
+        return pad + plusMinus + ' ' + p.h
     #@+node:ekr.20040315023430.3: *4* p.moreBody
     #@@language rest
     #@+at
@@ -773,10 +811,12 @@ class Position:
         UNL = '-->'.join(reversed(aList))
         if with_proto:
             # return ("file://%s#%s" % (self.v.context.fileName(), UNL)).replace(' ', '%20')
-            s = "unl:" + f"//{self.v.context.fileName()}#{UNL}"
+            ### s = "unl:" + f"//{self.v.context.fileName()}#{UNL}"
+            s = 'unl: //' + self.v.context.fileName() + '#' + UNL
             return s.replace(' ', '%20')
         if with_file:
-            return f"{self.v.context.fileName()}#{UNL}"
+            ### return f"{self.v.context.fileName()}#{UNL}"
+            return self.v.context.fileName() + '#' + UNL
         return UNL
     #@+node:ekr.20080416161551.192: *4* p.hasBack/Next/Parent/ThreadBack
     def hasBack(self):
@@ -1092,7 +1132,8 @@ class Position:
     def badUnlink(self, parent_v, n, child):
 
         if 0 <= n < len(parent_v.children):
-            g.trace(f"**can not happen: children[{n}] != p.v")
+            ### g.trace(f"**can not happen: children[{n}] != p.v")
+            g.trace("**can not happen: children[%s] != p.v" % n)
             g.trace('parent_v.children...\n',
                 g.listToString(parent_v.children))
             g.trace('parent_v', parent_v)
@@ -1102,14 +1143,20 @@ class Position:
             if g.app.unitTesting: assert False, 'children[%s] != p.v'
         else:
             g.trace(
-                f"**can not happen: bad child index: {n}, "
-                f"len(children): {len(parent_v.children)}")
+                ###
+                # f"**can not happen: bad child index: {n}, "
+                # f"len(children): {len(parent_v.children)}")
+                ''.join([
+                    '** can not happen: bad child index: ', str(n),
+                    'len(children)) : ', str(len(parent_v.children)),
+                ]))   
             g.trace('parent_v.children...\n',
                 g.listToString(parent_v.children))
             g.trace('parent_v', parent_v, 'child', child)
             g.trace('** callers:', g.callers())
             if g.app.unitTesting:
-                assert False, f"bad child index: {n}"
+                ### assert False, f"bad child index: {n}"
+                assert False, ('bad child index', repr(n))
     #@+node:ekr.20080416161551.199: *3* p.moveToX
     #@+at These routines change self to a new position "in place".
     # That is, these methods must _never_ call p.copy().
@@ -1308,7 +1355,8 @@ class Position:
                 for parent in p.self_and_parents(copy=False):
                     if child_v == parent.v:
                         g.app.structure_errors += 1
-                        g.error(f"vnode: {child_v} is its own parent")
+                        ### g.error(f"vnode: {child_v} is its own parent")
+                        g.error('vnode: ' + str(child_v) + 'is its own parent')
                         # Allocating a new vnode would be difficult.
                         # Just remove child_v from parent.v.children.
                         parent.v.children = [
@@ -1321,8 +1369,15 @@ class Position:
                     elif child_v.fileIndex == parent.v.fileIndex:
                         g.app.structure_errors += 1
                         g.error(
-                            f"duplicate gnx: {child_v.fileIndex!r} "
-                            f"v: {child_v} parent: {parent.v}")
+                            ###
+                            # f"duplicate gnx: {child_v.fileIndex!r} "
+                            # f"v: {child_v} parent: {parent.v}")
+                            ' '.join([
+                                'duplicate gnx:', repr(child_v.fileIndex),
+                                'v:', str(child_v),
+                                'parent:', str(parent.v),
+                            ])
+                        )
                         child_v.fileIndex = g.app.nodeIndices.getNewIndex(v=child_v)
                         assert child_v.gnx != parent.v.gnx
                         # Should be ok to continue.
@@ -1496,7 +1551,8 @@ class Position:
             node = p.parent()
         else:
             node = p
-        p.v.context.alert(f"invalid outline: {message}\n{node}")
+        ### p.v.context.alert(f"invalid outline: {message}\n{node}")
+        p.v.context.alert('invalid outline: ' + message + '\n' + repr(node))
     #@+node:ekr.20040303175026.10: *4* p.moveAfter
     def moveAfter(self, a):
         """Move a position after position a."""
@@ -1960,7 +2016,8 @@ class VNode:
         assert self.fileIndex, g.callers()
     #@+node:ekr.20031218072017.3345: *4* v.__repr__ & v.__str__
     def __repr__(self):
-        return f"<VNode {self.gnx} {self.headString()}>"
+        ### return f"<VNode {self.gnx} {self.headString()}>"
+        return '<VNode ' + self.gnx + ' ' + self.headString() + '>'
 
     __str__ = __repr__
     #@+node:ekr.20040312145256: *4* v.dump
@@ -1970,12 +2027,17 @@ class VNode:
     def dump(self, label=""):
         v = self
         s = '-' * 10
-        print(f"{s} {label} {v}")
-        # print('gnx: %s' % v.gnx)
-        print(f"len(parents): {len(v.parents)}")
-        print(f"len(children): {len(v.children)}")
-        print(f"parents: {g.listToString(v.parents)}")
-        print(f"children: {g.listToString(v.children)}")
+        ###
+        # print(f"{s} {label} {v}")
+        print(s + ' ' + label + ' ' + str(v))
+        # print(f"len(parents): {len(v.parents)}")
+        print('len(parents): ' + str(len(v.parents)))
+        # print(f"len(children): {len(v.children)}")
+        print('len(children): ' + str(len(v.children)))
+        # print(f"parents: {g.listToString(v.parents)}")
+        print('parents: ' + g.listToString(v.parents))
+        # print(f"children: {g.listToString(v.children)}")
+        print('children: ' + g.listToString(v.children))
     #@+node:ekr.20031218072017.3346: *3* v.Comparisons
     #@+node:ekr.20040705201018: *4* v.findAtFileName
     def findAtFileName(self, names, h=''):
@@ -2374,7 +2436,9 @@ class VNode:
             w.setInsertPoint(ins)
         if traceTime:
             delta_t = time.time() - t1
-            if delta_t > 0.1: g.trace(f"{delta_t:2.3f} sec")
+            if delta_t > 0.1:
+                ### g.trace(f"{delta_t:2.3f} sec")
+                g.trace('%2.3f sec' % (delta_t))
         # Override any changes to the scrollbar setting that might
         # have been done above by w.setSelectionRange or w.setInsertPoint.
         if spot is not None:
@@ -2528,7 +2592,8 @@ class VNode:
             try:
                 v.parents.remove(parent_v)
             except ValueError:
-                g.internalError(f"{parent_v} not in parents of {v}")
+                ### g.internalError(f"{parent_v} not in parents of {v}")
+                g.internalError(str(parent_v) + ' not in parents of ' + str(v))
                 g.trace('v.parents:')
                 g.printObj(v.parents)
         v._p_changed = 1
@@ -2560,7 +2625,8 @@ class VNode:
             try:
                 v2.parents.remove(v)
             except ValueError:
-                g.internalError(f"{v} not in parents of {v2}")
+                ### g.internalError(f"{v} not in parents of {v2}")
+                g.internalError(str(v) + ' not in parents of ' + str(v2))
                 g.trace('v2.parents:')
                 g.printObj(v2.parents)
         v.children = []
